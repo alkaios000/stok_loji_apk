@@ -278,4 +278,69 @@ void main() {
     expect(find.text('12 Thinwal'), findsOneWidget);
     expect(find.text('habis'), findsOneWidget);
   });
+
+  testWidgets('Test Edit Modal Shortcut with Fractions (1/2, 1 1/2) and Decimals (0,5, 1.5)', (WidgetTester tester) async {
+    await tester.pumpWidget(const SistemStockApp());
+    await tester.pumpAndSettle();
+
+    // Edit first item
+    final editIcons = find.byIcon(Icons.edit);
+    await tester.tap(editIcons.first);
+    await tester.pumpAndSettle();
+
+    final dialogTextFields = find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField));
+    final sisaField = dialogTextFields.at(3);
+
+    // 1. Test Fraction input '1/2'
+    await tester.tap(sisaField);
+    await tester.enterText(sisaField, '1/2');
+    await tester.pumpAndSettle();
+
+    // Unit buttons should appear for fractions!
+    expect(find.text('Thinwal'), findsOneWidget);
+    expect(find.text('botol'), findsOneWidget);
+    expect(find.text('pack'), findsOneWidget);
+    expect(find.text('pcs'), findsOneWidget);
+    expect(find.text('masih'), findsNothing);
+
+    // Tap pack -> should be '1/2 pack'
+    await tester.tap(find.text('pack'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '1/2 pack'), findsOneWidget);
+
+    // Switch to botol -> should cleanly update to '1/2 botol'
+    await tester.tap(find.text('botol'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '1/2 botol'), findsOneWidget);
+
+    // 2. Test Comma Decimal '0,5'
+    await tester.enterText(sisaField, '0,5');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Thinwal'), findsOneWidget);
+    expect(find.text('botol'), findsOneWidget);
+
+    await tester.tap(find.text('botol'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '0,5 botol'), findsOneWidget);
+
+    // Switch to Thinwal -> should be '0,5 Thinwal'
+    await tester.tap(find.text('Thinwal'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '0,5 Thinwal'), findsOneWidget);
+
+    // 3. Test Mixed Fraction '1 1/2'
+    await tester.enterText(sisaField, '1 1/2');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('pack'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '1 1/2 pack'), findsOneWidget);
+
+    // Save and verify table row has '1 1/2 pack'
+    await tester.tap(find.text('Simpan Perubahan'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 1/2 pack'), findsOneWidget);
+  });
 }

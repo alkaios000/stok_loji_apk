@@ -402,11 +402,23 @@ class _StockHomePageState extends State<StockHomePage> {
 
             void applyUnit(TextEditingController ctrl, String unit) {
               final current = ctrl.text.trim();
-              final match = RegExp(r'^(\d+[\.,]?\d*)').firstMatch(current);
+              // Mendukung angka bulat (10), desimal koma/titik (0,5 / 1.5),
+              // pecahan biasa (1/2, 3/4), pecahan campuran (1 1/2), dan simbol pecahan unicode (½, ¼, ¾)
+              final match = RegExp(
+                r'^(\d+\s+\d+\s*\/\s*\d+|\d+\s*\/\s*\d+|\d+[\.,]\d+|\d+|[\.,]\d+|\d*\s*[½¼¾⅓⅔⅛⅜⅝⅞])',
+              ).firstMatch(current);
+
               if (match != null) {
-                ctrl.text = '${match.group(1)} $unit';
+                ctrl.text = '${match.group(1)!.trim()} $unit';
               } else if (current.isNotEmpty) {
-                ctrl.text = '$current $unit';
+                String cleaned = current;
+                for (final u in ['Thinwal', 'thinwal', 'botol', 'pack', 'pcs']) {
+                  if (cleaned.toLowerCase().endsWith(u.toLowerCase())) {
+                    cleaned = cleaned.substring(0, cleaned.length - u.length).trim();
+                    break;
+                  }
+                }
+                ctrl.text = cleaned.isNotEmpty ? '$cleaned $unit' : unit;
               } else {
                 ctrl.text = unit;
               }
@@ -421,7 +433,7 @@ class _StockHomePageState extends State<StockHomePage> {
               required FocusNode focusNode,
             }) {
               final bool isActive = activeTargetIndex == index;
-              final bool hasNumber = RegExp(r'\d').hasMatch(controller.text);
+              final bool hasNumber = RegExp(r'[\d½¼¾⅓⅔⅛⅜⅝⅞]').hasMatch(controller.text);
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
