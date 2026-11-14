@@ -1508,9 +1508,11 @@ class _StockHomePageState extends State<StockHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredItems = _items.where((item) {
-      return item.nama.toLowerCase().contains(_searchQuery.toLowerCase());
-    }).toList();
+    final List<ItemBarang> filteredItems = _searchQuery.isEmpty
+        ? _items
+        : _items
+            .where((item) => item.nama.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .toList();
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -1995,10 +1997,9 @@ class _StockHomePageState extends State<StockHomePage> {
                           // List Baris Data (Reorderable ListView saat tidak mencari - Requirement 2)
                           Expanded(
                             child: _searchQuery.isNotEmpty
-                                ? ListView.separated(
+                                ? ListView.builder(
                                     itemCount: filteredItems.length,
-                                    separatorBuilder: (context, index) =>
-                                        const Divider(height: 1, color: Colors.grey),
+                                    itemExtent: 44.0,
                                     itemBuilder: (context, index) {
                                       final item = filteredItems[index];
                                       return _buildTableRow(item, index, isReorderable: false);
@@ -2006,6 +2007,7 @@ class _StockHomePageState extends State<StockHomePage> {
                                   )
                                 : ReorderableListView.builder(
                                     itemCount: _items.length,
+                                    itemExtent: 44.0,
                                     buildDefaultDragHandles: false,
                                     onReorderItem: _onReorderItem,
                                     proxyDecorator: (Widget child, int index, Animation<double> animation) {
@@ -2048,12 +2050,14 @@ class _StockHomePageState extends State<StockHomePage> {
   // Builder Baris Tabel dengan Indikator Geser (Threshold / Long-press Drag)
   Widget _buildTableRow(ItemBarang item, int index, {required bool isReorderable}) {
     final shiftData = _selectedShift == 0 ? item.pagi : item.sore;
+    final int realIndex = isReorderable ? index : _items.indexOf(item);
 
-    Widget rowContent = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+    final Widget rowContent = Container(
+      height: 44.0,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        color: index % 2 == 0 ? Colors.white : Colors.grey.shade50,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 1)),
+        color: index % 2 == 0 ? Colors.white : const Color(0xFFF9FAFB),
+        border: const Border(bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
       ),
       child: Row(
         children: [
@@ -2064,7 +2068,7 @@ class _StockHomePageState extends State<StockHomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (isReorderable)
-                  Icon(Icons.drag_indicator, size: 14, color: Colors.grey.shade400)
+                  const Icon(Icons.drag_indicator, size: 14, color: Colors.black26)
                 else
                   const SizedBox(width: 4),
                 const SizedBox(width: 2),
@@ -2085,6 +2089,7 @@ class _StockHomePageState extends State<StockHomePage> {
               item.nama,
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
               overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
           const SizedBox(width: 4),
@@ -2097,6 +2102,7 @@ class _StockHomePageState extends State<StockHomePage> {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 11),
               overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
           const SizedBox(width: 4),
@@ -2109,6 +2115,7 @@ class _StockHomePageState extends State<StockHomePage> {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 11),
               overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
           const SizedBox(width: 4),
@@ -2121,6 +2128,7 @@ class _StockHomePageState extends State<StockHomePage> {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
           const SizedBox(width: 2),
@@ -2132,14 +2140,14 @@ class _StockHomePageState extends State<StockHomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 InkWell(
-                  onTap: () => _showEditBarangDialog(_items.indexOf(item)),
+                  onTap: () => _showEditBarangDialog(realIndex),
                   child: const Padding(
                     padding: EdgeInsets.all(4.0),
                     child: Icon(Icons.edit, size: 15, color: Colors.blue),
                   ),
                 ),
                 InkWell(
-                  onTap: () => _confirmDeleteBarang(_items.indexOf(item)),
+                  onTap: () => _confirmDeleteBarang(realIndex),
                   child: const Padding(
                     padding: EdgeInsets.all(4.0),
                     child: Icon(Icons.delete, size: 15, color: Colors.red),
@@ -2161,6 +2169,9 @@ class _StockHomePageState extends State<StockHomePage> {
       );
     }
 
-    return rowContent;
+    return Container(
+      key: ValueKey(item.id),
+      child: rowContent,
+    );
   }
 }
